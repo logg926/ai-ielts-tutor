@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { OPENAI_API_KEY } from '@/lib/envSetup'
+import { systemPrompt, tools } from '@/app/systemPrompt'
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
       model: agentConfig?.model || 'gpt-4o-realtime-preview',
       voice: 'alloy',
       modalities: ['audio', 'text'],
-      instructions: agentConfig?.instructions || 'You are a helpful AI assistant.',
+      instructions: systemPrompt,
       input_audio_transcription: {
         model: 'whisper-1'
       },
@@ -29,7 +31,8 @@ export async function POST(request: NextRequest) {
         threshold: 0.5,
         prefix_padding_ms: 300,
         silence_duration_ms: 200
-      }
+      },
+      tools: tools,
     }
     
     console.log('OpenAI request body:', JSON.stringify(requestBody, null, 2))
