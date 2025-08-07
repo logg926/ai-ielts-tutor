@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     console.log('API Key prefix:', OPENAI_API_KEY?.substring(0, 10) + '...' || 'N/A')
 
     const requestBody = {
-      model: agentConfig?.model || 'gpt-4o-realtime-preview',
+      model: 'gpt-4o-realtime-preview',
       voice: 'alloy',
       modalities: ['audio', 'text'],
       instructions: systemPrompt,

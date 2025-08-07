@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mic, MicOff, Phone, PhoneOff, Loader2 } from 'lucide-react'
+import PDFViewer, { PDFViewerRef } from '@/components/PDFViewer'
 
 export default function App() {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
@@ -17,6 +18,7 @@ export default function App() {
   const dataChannelRef = useRef<RTCDataChannel | null>(null)
   const audioStreamRef = useRef<MediaStream | null>(null)
   const audioElementRef = useRef<HTMLAudioElement | null>(null)
+  const pdfViewerRef = useRef<PDFViewerRef | null>(null)
 
   // Create audio element programmatically like the SDK does
   const audioElement = React.useMemo(() => {
@@ -176,6 +178,21 @@ export default function App() {
               text: aiText,
               timestamp: new Date()
             }])
+          } else if (data.type === 'response.function_call_arguments.done') {
+            // Handle function calls from the AI
+            console.log('Function call received:', data)
+            if (data.name === 'go_to_page' && data.arguments) {
+              try {
+                const args = JSON.parse(data.arguments)
+                const pageNumber = args.page_number
+                if (pageNumber && pdfViewerRef.current) {
+                  console.log(`AI requested to go to page ${pageNumber}`)
+                  pdfViewerRef.current.goToPage(pageNumber)
+                }
+              } catch (err) {
+                console.error('Error parsing function call arguments:', err)
+              }
+            }
           }
         } catch (err) {
           console.error('Error parsing data channel message:', err)
@@ -330,7 +347,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-2rem)]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -480,6 +498,21 @@ export default function App() {
             </CardContent>
           </Card>
         </motion.div>
+        
+        {/* PDF Viewer Panel */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="h-full"
+        >
+          <PDFViewer 
+            ref={pdfViewerRef}
+            className="h-full"
+          />
+        </motion.div>
+        
+        </div>
       </div>
     </div>
   )
