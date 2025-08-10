@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useRealtimeSession, type RealtimeAgent } from '@/hooks/hooks/useRealtimeSession';
 import { useTranscript } from '@/contexts/TranscriptContext';
 import { SessionStatus } from '@/types';
@@ -28,6 +28,18 @@ You should:
 - Give concrete examples when possible
 - Keep responses conversational but professional
 - Speak naturally as if you're having a face-to-face conversation with the student
+- When discussing specific sections of the report, use the navigate_to_section tool to guide the user's attention to that part
+
+IMPORTANT: You have access to a navigate_to_section tool that can scroll the user to specific parts of their report. Use this tool whenever you mention:
+- Overall score or band score
+- Task Response scoring
+- Coherence & Cohesion scoring
+- Lexical Resource scoring
+- Grammar & Accuracy scoring
+- Examiner tip or advice
+- Essay comparison
+- Original essay text
+- Rewritten essay text
 
 Student's Essay Analysis:
 - Overall Score: ${reportData?.overall_score || 'N/A'}/9
@@ -58,6 +70,68 @@ When the student first connects, greet them warmly and offer to guide them throu
     }
   }, [sdkAudioElement]);
 
+  // Navigation handler for AI tool calls
+  const handleNavigateToSection = useCallback((section: string, reason?: string) => {
+    console.log('🧭 [DEBUG] Navigation requested:', { section, reason });
+    
+    // Map section names to DOM element IDs or classes
+    const sectionMap: Record<string, string> = {
+      'overall_score': '.score-dial', // Overall score dial
+      'task_response': 'h3:contains("Task Response")', // Task Response section
+      'coherence_cohesion': 'h3:contains("Coherence & Cohesion")', // Coherence section
+      'lexical_resource': 'h3:contains("Lexical Resource")', // Lexical section
+      'grammar_accuracy': 'h3:contains("Grammar & Accuracy")', // Grammar section
+      'examiner_tip': '.bg-gradient-to-br', // Examiner tip card
+      'essay_comparison': '#comparison-content', // Essay comparison tab
+      'original_essay': '#original-essay', // Original essay container
+      'rewritten_essay': '#rewritten-essay' // Rewritten essay container
+    };
+    
+    const targetSelector = sectionMap[section];
+    if (targetSelector) {
+      // Use setTimeout to ensure the DOM is ready
+      setTimeout(() => {
+        try {
+          let element: Element | null = null;
+          
+          // Handle special selectors
+          if (targetSelector.includes(':contains')) {
+            // For text-based selectors, find by text content
+            const text = targetSelector.match(/contains\("([^"]+)"\)/)?.[1];
+            if (text) {
+              const elements = Array.from(document.querySelectorAll('h3'));
+              element = elements.find(el => el.textContent?.includes(text)) || null;
+            }
+          } else {
+            // Regular selector
+            element = document.querySelector(targetSelector);
+          }
+          
+          if (element) {
+            // Scroll to the element with smooth behavior
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+            
+            // Add a temporary highlight effect
+            element.classList.add('ring-4', 'ring-blue-400', 'ring-opacity-75');
+            setTimeout(() => {
+              element?.classList.remove('ring-4', 'ring-blue-400', 'ring-opacity-75');
+            }, 3000);
+            
+            console.log('✅ [DEBUG] Successfully navigated to section:', section);
+          } else {
+            console.warn('⚠️ [DEBUG] Could not find element for section:', section);
+          }
+        } catch (error) {
+          console.error('❌ [DEBUG] Navigation error:', error);
+        }
+      }, 100);
+    }
+  }, []);
+
   const { 
     status,
     connect,
@@ -66,6 +140,7 @@ When the student first connects, greet them warmly and offer to guide them throu
     interrupt
   } = useRealtimeSession({
     onConnectionChange: (s) => setSessionStatus(s),
+    onNavigateToSection: handleNavigateToSection,
   });
 
   const { transcriptItems } = useTranscript();

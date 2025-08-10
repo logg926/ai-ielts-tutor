@@ -3,6 +3,7 @@ import {
   RealtimeSession,
   RealtimeAgent as OpenAIRealtimeAgent,
   OpenAIRealtimeWebRTC,
+  tool,
 } from '@openai/agents/realtime';
 import { useEvent } from '@/contexts/EventContext';
 import { SessionStatus } from '@/types';
@@ -18,6 +19,7 @@ export interface RealtimeAgent {
 export interface RealtimeSessionCallbacks {
   onConnectionChange?: (status: SessionStatus) => void;
   onAgentHandoff?: (agentName: string) => void;
+  onNavigateToSection?: (section: string, reason?: string) => void;
 }
 
 export interface ConnectOptions {
@@ -28,6 +30,50 @@ export interface ConnectOptions {
   extraContext?: Record<string, any>;
   outputGuardrails?: any[];
 }
+
+// Create the navigation tool using OpenAI Agents SDK pattern
+const createNavigationTool = (onNavigate?: (section: string, reason?: string) => void) => {
+  return tool({
+    name: 'navigate_to_section',
+    description: 'Navigate the user to a specific section of their IELTS report',
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        section: {
+          type: 'string',
+          enum: [
+            'overall_score',
+            'task_response', 
+            'coherence_cohesion',
+            'lexical_resource',
+            'grammar_accuracy',
+            'examiner_tip',
+            'essay_comparison',
+            'original_essay',
+            'rewritten_essay'
+          ],
+          description: 'The section of the report to navigate to'
+        },
+        reason: {
+          type: 'string',
+          description: 'Brief explanation of why you are directing attention to this section'
+        }
+      },
+      required: ['section'],
+      additionalProperties: false
+    },
+    execute: async (input: any) => {
+      console.log('🧭 [DEBUG] Navigation tool executed:', input);
+      
+      if (onNavigate && input.section) {
+        onNavigate(input.section, input.reason);
+      }
+      
+      return `Successfully navigated to ${input.section} section${input.reason ? `: ${input.reason}` : ''}`;
+    }
+  });
+};
 
 export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   const sessionRef = useRef<any | null>(null);
@@ -69,13 +115,16 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         const rootAgent = initialAgents[0];
         console.log('🔄 [DEBUG] Using agent:', rootAgent);
 
+        // Create navigation tool for this session
+        const navigationTool = createNavigationTool(callbacks.onNavigateToSection);
+
         // Create proper OpenAI RealtimeAgent using the constructor
         console.log('🔄 [DEBUG] Creating OpenAI RealtimeAgent...');
         const openAIAgent = new OpenAIRealtimeAgent({
           name: rootAgent.name,
           instructions: rootAgent.instructions,
           voice: rootAgent.voice || 'alloy',
-          tools: [],
+          tools: [navigationTool],
           handoffs: [],
         });
         console.log('✅ [DEBUG] OpenAI RealtimeAgent created successfully');
@@ -101,6 +150,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
               threshold: 0.5,
               silence_duration_ms: 200,
             },
+
           },
           outputGuardrails: outputGuardrails ?? [],
           context: extraContext ?? {},
@@ -149,6 +199,8 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         sessionRef.current.on('response.done', (event: any) => {
           console.log('✅ [DEBUG] Response completed:', event);
         });
+
+
 
         console.log('✅ [DEBUG] Event listeners set up successfully');
 

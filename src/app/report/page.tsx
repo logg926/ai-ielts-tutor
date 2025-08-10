@@ -194,6 +194,97 @@ function ReportPageContent() {
             }
           };
           
+          // Add global navigation function for Voice AI Professor
+          (window as any).navigateToReportSection = function(section: string, reason?: string) {
+            console.log('🧭 [GLOBAL] Navigation requested:', { section, reason });
+            
+            let element: Element | null = null;
+            let needsTabSwitch = false;
+            
+            switch (section) {
+              case 'overall_score':
+                element = document.querySelector('#overall-score-section');
+                break;
+                
+              case 'task_response':
+                element = document.querySelector('#task-response-section');
+                break;
+                
+              case 'coherence_cohesion':
+                element = document.querySelector('#coherence-cohesion-section');
+                break;
+                
+              case 'lexical_resource':
+                element = document.querySelector('#lexical-resource-section');
+                break;
+                
+              case 'grammar_accuracy':
+                element = document.querySelector('#grammar-accuracy-section');
+                break;
+                
+              case 'examiner_tip':
+                element = document.querySelector('#examiner-tip-section');
+                break;
+                
+              case 'essay_comparison':
+                // First, switch to comparison tab
+                const comparisonTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
+                  tab.textContent?.includes('Comparison') || tab.textContent?.includes('Essay')
+                ) as HTMLElement;
+                
+                if (comparisonTab) {
+                  comparisonTab.click();
+                  needsTabSwitch = true;
+                }
+                
+                // Find comparison content
+                element = document.querySelector('#comparison-content');
+                break;
+                
+              case 'original_essay':
+                element = document.querySelector('#original-essay');
+                break;
+                
+              case 'rewritten_essay':
+                element = document.querySelector('#rewritten-essay');
+                break;
+            }
+            
+            if (element) {
+              const scrollDelay = needsTabSwitch ? 500 : 100;
+              
+              setTimeout(() => {
+                // Scroll to element
+                element!.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest'
+                });
+                
+                // Add highlight effect
+                element!.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-100', 'bg-blue-50', 'bg-opacity-75');
+                
+                // Remove highlight after 4 seconds
+                setTimeout(() => {
+                  element?.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-100', 'bg-blue-50', 'bg-opacity-75');
+                }, 4000);
+                
+                console.log('✅ [GLOBAL] Successfully navigated to section:', section);
+              }, scrollDelay);
+            } else {
+              console.warn('⚠️ [GLOBAL] Could not find element for section:', section);
+              console.warn('⚠️ [GLOBAL] Available elements:', {
+                overallScore: !!document.querySelector('#overall-score-section'),
+                taskResponse: !!document.querySelector('#task-response-section'),
+                coherenceCohesion: !!document.querySelector('#coherence-cohesion-section'),
+                lexicalResource: !!document.querySelector('#lexical-resource-section'),
+                grammarAccuracy: !!document.querySelector('#grammar-accuracy-section'),
+                examinerTip: !!document.querySelector('#examiner-tip-section'),
+                comparisonContent: !!document.querySelector('#comparison-content')
+              });
+            }
+          };
+          
           // Also populate comparison content immediately for initial load
           populateComparison();
           
