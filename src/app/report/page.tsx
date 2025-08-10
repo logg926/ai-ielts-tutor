@@ -200,6 +200,28 @@ function ReportPageContent() {
             console.log('🧭 [GLOBAL] DOM ready state:', document.readyState);
             console.log('🧭 [GLOBAL] Total elements in DOM:', document.querySelectorAll('*').length);
             
+            // Import toast dynamically since this runs in browser context
+            import('sonner').then(({ toast }) => {
+              // Show initial navigation toast
+              const sectionNames: Record<string, string> = {
+                'overall_score': 'Overall Score',
+                'task_response': 'Task Response',
+                'coherence_cohesion': 'Coherence & Cohesion',
+                'lexical_resource': 'Lexical Resource',
+                'grammar_accuracy': 'Grammar & Accuracy',
+                'examiner_tip': 'Examiner Tip',
+                'essay_comparison': 'Essay Comparison',
+                'original_essay': 'Original Essay',
+                'rewritten_essay': 'Rewritten Essay'
+              };
+              
+              const sectionName = sectionNames[section] || section;
+              toast.info(`🧭 Navigating to ${sectionName}`, {
+                description: reason || 'AI Professor is guiding you to this section',
+                duration: 2000,
+              });
+            }).catch(err => console.warn('Toast import failed:', err));
+            
             let element: Element | null = null;
             let needsTabSwitch = false;
             
@@ -308,6 +330,27 @@ function ReportPageContent() {
                 }, 4000);
                 
                 console.log('✅ [GLOBAL] Successfully navigated to section:', section);
+                
+                // Show success toast
+                import('sonner').then(({ toast }) => {
+                  const sectionNames: Record<string, string> = {
+                    'overall_score': 'Overall Score',
+                    'task_response': 'Task Response',
+                    'coherence_cohesion': 'Coherence & Cohesion',
+                    'lexical_resource': 'Lexical Resource',
+                    'grammar_accuracy': 'Grammar & Accuracy',
+                    'examiner_tip': 'Examiner Tip',
+                    'essay_comparison': 'Essay Comparison',
+                    'original_essay': 'Original Essay',
+                    'rewritten_essay': 'Rewritten Essay'
+                  };
+                  
+                  const sectionName = sectionNames[section] || section;
+                  toast.success(`✅ Arrived at ${sectionName}`, {
+                    description: 'Section highlighted and ready for review',
+                    duration: 2000,
+                  });
+                }).catch(err => console.warn('Success toast import failed:', err));
               }, scrollDelay);
             } else {
               console.warn('⚠️ [GLOBAL] Could not find element for section:', section);

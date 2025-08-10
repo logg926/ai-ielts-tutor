@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TranscriptProvider } from "@/contexts/TranscriptContext";
 import { EventProvider } from "@/contexts/EventContext";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,12 @@ export default function RootLayout({
         <EventProvider>
           <TranscriptProvider>
             {children}
+            <Toaster 
+              position="top-right"
+              richColors
+              closeButton
+              duration={3000}
+            />
           </TranscriptProvider>
         </EventProvider>
       </body>
