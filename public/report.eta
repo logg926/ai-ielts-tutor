@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>IELTS Writing Assessment Report (Final Version)</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #f0f2f5;
+            }
+
+            .score-dial {
+                transform: rotate(-90deg);
+                animation: fill-dial 1.5s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+            }
+
+            @keyframes fill-dial {
+                from {
+                    stroke-dashoffset: 440;
+                }
+
+                to {
+                    /* (1 - (6.0 / 9)) * 440 = 146.67 */
+                    stroke-dashoffset: 146.67;
+                }
+            }
+
+            .tab {
+                transition: all 0.3s ease;
+            }
+
+            .tab.active {
+                color: #fff;
+                background-color: #2563eb;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .highlight {
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .highlight-original {
+                background-color: rgba(239, 68, 68, 0.15);
+                border-bottom: 2px solid rgba(239, 68, 68, 0.3);
+            }
+
+            .highlight-rewritten {
+                background-color: rgba(34, 197, 94, 0.15);
+                border-bottom: 2px solid rgba(34, 197, 94, 0.3);
+            }
+
+            .highlight-original.active-hover, .highlight-original:hover {
+                background-color: rgba(239, 68, 68, 0.3);
+            }
+
+            .highlight-rewritten.active-hover, .highlight-rewritten:hover {
+                background-color: rgba(34, 197, 94, 0.3);
+            }
+
+            #tooltip {
+                position: absolute;
+                display: none;
+                background-color: #1f2937;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                z-index: 100;
+                width: 300px;
+                font-size: 14px;
+                line-height: 1.6;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                pointer-events: none;
+                transition: opacity 0.2s;
+                border: 1px solid #374151;
+            }
+
+            #tooltip .tooltip-pillar-tag {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 9999px;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                margin-top: 8px;
+                margin-right: 4px;
+            }
+
+            .pillar-tr {
+                background-color: #2563eb;
+                color: white;
+            }
+
+            .pillar-cc {
+                background-color: #db2777;
+                color: white;
+            }
+
+            .pillar-lr {
+                background-color: #16a34a;
+                color: white;
+            }
+
+            .pillar-gra {
+                background-color: #f97316;
+                color: white;
+            }
+
+            .modal-container {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+
+            .modal-container.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .modal-box {
+                transform: scale(0.95);
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .modal-container.active .modal-box {
+                transform: scale(1);
+            }
+
+            .accordion-content {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.4s ease-in-out;
+            }
+
+            .lang-toggle button.active {
+                background-color: #3b82f6;
+                color: white;
+            }
+        </style>
+    </head>
+    <body class="p-4 sm:p-6 md:p-8">
+        <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <header class="p-6 bg-gray-800 text-white flex justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold">
+                    <span class="lang-en">IELTS Writing Assessment Report</span>
+                    <span class="lang-zh hidden">IELTS 寫作評估報告</span>
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm font-semibold text-gray-300">
+                        <span class="lang-en">Topic: Job Satisfaction vs. Security</span>
+                        <span class="lang-zh hidden">主題: 工作滿意度 vs. 工作保障</span>
+                    </div>
+                    <div class="lang-toggle bg-gray-700 p-1 rounded-lg flex text-sm">
+                        <button onclick="switchLanguage('en')" class="lang-btn en active px-2 py-1 rounded-md transition-colors">EN</button>
+                        <button onclick="switchLanguage('zh')" class="lang-btn zh px-2 py-1 rounded-md transition-colors">繁</button>
+                    </div>
+                </div>
+            </header>
+            <!-- Tab Navigation -->
+            <div class="p-4 border-b border-gray-200">
+                <nav class="flex justify-center space-x-2 md:space-x-4 bg-gray-100 p-1.5 rounded-lg">
+                    <button class="tab active flex-1 py-2 px-4 rounded-md font-semibold text-gray-600" onclick="switchTab('feedback')">
+                        <span class="lang-en">Feedback Report</span>
+                        <span class="lang-zh hidden">評分報告</span>
+                    </button>
+                    <button class="tab flex-1 py-2 px-4 rounded-md font-semibold text-gray-600" onclick="switchTab('comparison')">
+                        <span class="lang-en">Essay Comparison</span>
+                        <span class="lang-zh hidden">文章對比</span>
+                    </button>
+                </nav>
+            </div>
+            <!-- Main Content -->
+            <main class="p-4 sm:p-6 md:p-8">
+                <!-- IELTS Question -->
+                <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+                    <h3 class="font-bold text-yellow-800">
+                        <span class="lang-en">IELTS Writing Question</span>
+                        <span class="lang-zh hidden">IELTS 寫作題目</span>
+                    </h3>
+                    <p class="text-gray-700 mt-1 text-sm">Some people believe that job satisfaction is more important than job security. Others believe that you cannot expect to always enjoy your job and that having a permanent job is more important. Discuss both views and give your own opinion.</p>
+                </div>
+                <!-- Feedback Report Tab -->
+                <div id="feedback-content" class="tab-content active">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Overall Score -->
+                        <div class="lg:col-span-1 flex flex-col items-center justify-center bg-gray-50 p-8 rounded-xl border border-gray-200">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">
+                                <span class="lang-en">Overall Band Score</span>
+                                <span class="lang-zh hidden">綜合評分</span>
+                            </h2>
+                            <div class="relative w-48 h-48">
+                                <svg class="w-full h-full" viewBox="0 0 160 160">
+                                    <circle cx="80" cy="80" r="70" stroke="#e5e7eb" stroke-width="20" fill="none"></circle>
+                                    <circle class="score-dial" cx="80" cy="80" r="70" stroke="url(#scoreGradient)" stroke-width="20" fill="none" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="440"></circle>
+                                    <defs>
+                                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#f97316;stop-opacity:1"/>
+                                            <stop offset="100%" style="stop-color:#fde047;stop-opacity:1"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-5xl font-extrabold text-gray-800">6.0</span>
+                                </div>
+                            </div>
+                            <p class="text-center text-gray-500 mt-4">
+                                <span class="lang-en">Your essay is clearly structured, but your arguments and vocabulary could be further developed.</span>
+                                <span class="lang-zh hidden">你的文章結構清晰，但論點和詞彙可以進一步提升。</span>
+                            </p>
+                        </div>
+                        <!-- Detailed Comments -->
+                        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- NEW EXAMINER TIP CARD -->
+                            <div class="md:col-span-2 bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-xl flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-blue-500 p-2 rounded-full ring-4 ring-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zM12 12a2 2 0 100-4h-4a2 2 0 100 4h4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-white">
+                                        <span class="lang-en">A Tip from Your IDP Examiner</span>
+                                        <span class="lang-zh hidden">IDP 考官提示</span>
+                                    </h3>
+                                    <p class="text-gray-300 text-sm mt-1">
+                                        <span class="lang-en">"The single biggest differentiator for a high score is a strong introduction. When I see skillful paraphrasing instead of copying, I immediately know I'm reading a potential Band 7+ essay. Make your first impression count."</span>
+                                        <span class="lang-zh hidden">"想拿高分，最強的差異化因素就是一個強而有力的引言。當我看到考生巧妙地改寫問題而不是直接複製時，我立刻就知道這可能是一篇7分以上的文章。務必讓你的第一印象出彩。"</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-bold text-gray-800">Task Response</h3>
+                                    <span class="text-xl font-bold text-blue-600 bg-blue-100 py-1 px-3 rounded-lg">6.0</span>
+                                </div>
+                                <div class="text-sm text-gray-600 space-y-3 flex-grow">
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">Strength:</span>
+                                            <span class="lang-zh hidden">優點:</span>
+                                        </strong>
+                                        <span class="lang-en">You successfully addressed both views and provided a clear position.</span>
+                                        <span class="lang-zh hidden">你成功回應了題目的兩個觀點，並給出了自己的立場。</span>
+                                    </p>
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">To Improve:</span>
+                                            <span class="lang-zh hidden">改進空間:</span>
+                                        </strong>
+                                        <span class="lang-en">The introduction repeats the question's wording without effective paraphrasing. Arguments could be developed further with more specific examples.</span>
+                                        <span class="lang-zh hidden">引言段落直接重複了題目的措辭，未能有效進行「paraphrase」。論點可以更深入地發展，例如，提供更具體的例子來支撐你的觀點。</span>
+                                    </p>
+                                </div>
+                                <button id="open-workshop-button-1" class="open-workshop-button mt-4 w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all">
+                                    <span class="lang-en">Unlock: Introduction Paraphrasing Skills</span>
+                                    <span class="lang-zh hidden">解鎖：引言段落改寫技巧</span>
+                                </button>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-bold text-gray-800">Coherence & Cohesion</h3>
+                                    <span class="text-xl font-bold text-pink-600 bg-pink-100 py-1 px-3 rounded-lg">6.0</span>
+                                </div>
+                                <div class="text-sm text-gray-600 space-y-3">
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">Strength:</span>
+                                            <span class="lang-zh hidden">優點:</span>
+                                        </strong>
+                                        <span class="lang-en">The essay has a clear four-paragraph structure and logical flow.</span>
+                                        <span class="lang-zh hidden">文章結構清晰，分為四個段落，邏輯流暢。</span>
+                                    </p>
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">To Improve:</span>
+                                            <span class="lang-zh hidden">改進空間:</span>
+                                        </strong>
+                                        <span class="lang-en">The use of cohesive devices is somewhat basic (e.g., "So", "Also"). Try using a wider range (e.g., "Furthermore", "Consequently") to enhance connections.</span>
+                                        <span class="lang-zh hidden">連接詞使用略顯單一（例如, "So", "Also"）。可以嘗試使用更多樣化的連接詞（如 "Furthermore", "Consequently"）來增強段落間的聯繫。</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-bold text-gray-800">Lexical Resource</h3>
+                                    <span class="text-xl font-bold text-green-600 bg-green-100 py-1 px-3 rounded-lg">5.5</span>
+                                </div>
+                                <div class="text-sm text-gray-600 space-y-3">
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">Strength:</span>
+                                            <span class="lang-zh hidden">優點:</span>
+                                        </strong>
+                                        <span class="lang-en">You used some basic vocabulary related to the topic.</span>
+                                        <span class="lang-zh hidden">使用了一些與主題相關的基本詞彙。</span>
+                                    </p>
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">To Improve:</span>
+                                            <span class="lang-zh hidden">改進空間:</span>
+                                        </strong>
+                                        <span class="lang-en">Word choice is repetitive and simple (e.g., "happy job", "very important"). Aim for more precise, academic vocabulary (e.g., "job fulfillment", "paramount").</span>
+                                        <span class="lang-zh hidden">詞彙選擇比較基礎（如 "happy job", "very important"）。應避免重複使用相同的詞語，並嘗試使用更精確、更學術的詞彙（如 "job fulfillment", "paramount"）。</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-bold text-gray-800">Grammar & Accuracy</h3>
+                                    <span class="text-xl font-bold text-orange-500 bg-orange-100 py-1 px-3 rounded-lg">6.0</span>
+                                </div>
+                                <div class="text-sm text-gray-600 space-y-3">
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">Strength:</span>
+                                            <span class="lang-zh hidden">優點:</span>
+                                        </strong>
+                                        <span class="lang-en">Most sentences are grammatically correct and the meaning is clear.</span>
+                                        <span class="lang-zh hidden">大部分句子語法正確，意思清晰。</span>
+                                    </p>
+                                    <p>
+                                        <strong>
+                                            <span class="lang-en">To Improve:</span>
+                                            <span class="lang-zh hidden">改進空間:</span>
+                                        </strong>
+                                        <span class="lang-en">There are some errors in subject-verb agreement ("A people need" should be "People need") and verb forms ("he must to buy" should be "he must buy").</span>
+                                        <span class="lang-zh hidden">存在一些語法錯誤，如主謂一致（"A people need" 應為 "A person needs" 或 "People need"）和動詞形式（"he must to buy" 應為 "he must buy"）。</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Essay Comparison Tab -->
+                <div id="comparison-content" class="tab-content">
+                    <div class="text-center mb-6">
+                        <button id="open-workshop-button-2" class="open-workshop-button bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-all inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="lang-en">Unlock Introduction Analysis</span>
+                            <span class="lang-zh hidden">解鎖引言分析</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                                <span class="lang-en">Your Essay</span>
+                                <span class="lang-zh hidden">你的文章</span>
+                                <span class="text-base font-medium text-gray-500">(Original)</span>
+                            </h2>
+                            <div id="original-essay" class="p-6 bg-gray-50 rounded-xl border border-gray-200 text-gray-700 leading-relaxed space-y-4"></div>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                                <span class="lang-en">Improved Version</span>
+                                <span class="lang-zh hidden">改進版本</span>
+                                <span class="text-base font-medium text-teal-600">(Target Band 7.5)</span>
+                            </h2>
+                            <div id="rewritten-essay" class="p-6 bg-teal-50 rounded-xl border border-teal-200 text-gray-800 leading-relaxed space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <!-- Tooltip element -->
+        <div id="tooltip"></div>
+        <!-- Introduction Skills Workshop Modal -->
+        <div id="workshop-modal" class="modal-container fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-40">
+            <div class="modal-box bg-gray-50 max-w-4xl w-full rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                <button id="close-workshop-button" class="absolute top-4 right-4 z-50 bg-gray-200 rounded-full p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-300 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                <div class="p-6 sm:p-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            <span class="lang-en">Introduction Skills Workshop: The Art of Paraphrasing</span>
+                            <span class="lang-zh hidden">引言技巧工作坊：改寫的藝術</span>
+                        </h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <h3 class="font-bold text-red-800 mb-2">
+                                <span class="lang-en">Your Introduction (Band 5 Level)</span>
+                                <span class="lang-zh hidden">你的引言 (5分水平)</span>
+                            </h3>
+                            <p class="text-red-700 text-sm italic">"Some people think a happy job is more important. Other people think a permanent job is more important. In my opinion, it is more important to have a permanent job."</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                            <h3 class="font-bold text-green-800 mb-2">
+                                <span class="lang-en">The Goal (A Band 7.5+ Introduction)</span>
+                                <span class="lang-zh hidden">目標引言 (7.5+分水平)</span>
+                            </h3>
+                            <p class="text-green-700 text-sm">"The debate over whether job satisfaction should be prioritised over job security is a defining feature of the modern career landscape. While many advocate for the pursuit of work that provides fulfillment, others contend that the stability of a permanent role is paramount. This essay will argue that while enjoying one's job is important, the financial and psychological security offered by a permanent position holds greater significance."</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                        <span class="lang-en">Let's Rebuild It, Step-by-Step:</span>
+                        <span class="lang-zh hidden">讓我們一步步重建它：</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <!-- Skills Accordion -->
+                        <div>
+                            <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center text-left p-4 bg-gray-200 hover:bg-gray-300 rounded-lg focus:outline-none">
+                                <span class="font-semibold text-gray-800">
+                                    <span class="lang-en">Skill 1: Use Synonyms</span>
+                                    <span class="lang-zh hidden">技巧 1：使用同義詞</span>
+                                </span>
+                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="accordion-content bg-white p-4 rounded-b-lg">
+                                <p class="text-sm text-gray-600">
+                                    <span class="lang-en">Instead of repeating simple words from the question, elevate your vocabulary. This shows the examiner you have a wider lexical range.</span>
+                                    <span class="lang-zh hidden">不要重複問題中的簡單詞彙，提升你的詞彙量。這能向考官展示你更廣泛的詞彙能力。</span>
+                                </p>
+                                <ul class="list-disc list-inside mt-2 text-sm space-y-1">
+                                    <li>
+                                        <span class="font-semibold text-red-600">job satisfaction</span>
+                                        → <span class="font-semibold text-green-600">job fulfillment / work satisfaction / a rewarding career</span>
+                                    </li>
+                                    <li>
+                                        <span class="font-semibold text-red-600">permanent job</span>
+                                        → <span class="font-semibold text-green-600">job security / a stable role / long-term employment</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center text-left p-4 bg-gray-200 hover:bg-gray-300 rounded-lg focus:outline-none">
+                                <span class="font-semibold text-gray-800">
+                                    <span class="lang-en">Skill 2: Change Word Forms</span>
+                                    <span class="lang-zh hidden">技巧 2：改變詞性</span>
+                                </span>
+                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="accordion-content bg-white p-4 rounded-b-lg">
+                                <p class="text-sm text-gray-600">
+                                    <span class="lang-en">Demonstrate grammatical flexibility by changing the part of speech. This creates more sophisticated sentence structures.</span>
+                                    <span class="lang-zh hidden">通過改變詞性來展示語法的靈活性。這能創造出更複雜的句子結構。</span>
+                                </p>
+                                <ul class="list-disc list-inside mt-2 text-sm space-y-1">
+                                    <li>
+                                        <span class="lang-en">Instead of the noun phrase "job satisfaction," use a verbal or adjectival form: "to</span>
+                                        <span class="lang-zh hidden">不要用名詞片語 "job satisfaction"，改用動詞或形容詞形式："to</span>
+                                        <span class="font-semibold text-green-600">feel satisfied</span>
+                                        at work" or "how <span class="font-semibold text-green-600">satisfied</span>
+                                        workers are."
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <button onclick="toggleAccordion(this)" class="w-full flex justify-between items-center text-left p-4 bg-gray-200 hover:bg-gray-300 rounded-lg focus:outline-none">
+                                <span class="font-semibold text-gray-800">
+                                    <span class="lang-en">Skill 3: Rearrange Sentence Structure</span>
+                                    <span class="lang-zh hidden">技巧 3：重組句子結構</span>
+                                </span>
+                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="accordion-content bg-white p-4 rounded-b-lg">
+                                <p class="text-sm text-gray-600">
+                                    <span class="lang-en">Don't just copy the question's structure. Rephrase the entire idea. A great way to start a "Discuss both views" essay is by framing it as a debate.</span>
+                                    <span class="lang-zh hidden">不要只是複製問題的結構，要改寫整個概念。一個很好的開頭方式是將其構建為一場辯論。</span>
+                                </p>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    <span class="lang-en">For example, start with:</span>
+                                    <span class="lang-zh hidden">例如，可以這樣開頭：</span>
+                                    <span class="font-semibold text-green-600">"The debate over whether [View 1] should be prioritised over [View 2] is..."</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="interactive_voice_lesson.html" class="block group mt-6 bg-gray-800 hover:bg-indigo-900 transition-all duration-300 rounded-xl p-6 text-white no-underline">
+                        <div class="flex items-center">
+                            <div class="mr-5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-400 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L4 6.44V4a1 1 0 00-2 0v12a1 1 0 001 1h12a1 1 0 001-1v-2.44l7.447 3.339A1 1 0 0019 17V4a1 1 0 00-1-1zM4 16V7.56l12-5.4v11.88l-12 5.4z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xl">
+                                    <span class="lang-en">Go to the Next Level</span>
+                                    <span class="lang-zh hidden">前往下一階段</span>
+                                </h3>
+                                <p class="text-indigo-200 group-hover:text-white">
+                                    <span class="lang-en">Ready to sound like a native speaker? Open the Interactive Voice Lesson to master the pronunciation and flow of a perfect introduction.</span>
+                                    <span class="lang-zh hidden">準備好像母語者一樣流利嗎？打開互動語音課程，掌握完美引言的發音和語調。</span>
+                                </p>
+                            </div>
+                            <div class="ml-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transform group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <script>
+            // --- DATA ---
+            const originalEssayText = `Some people think a happy job is more important. Other people think a permanent job is more important. In my opinion, it is more important to have a permanent job.\n\nHaving a permanent job is very important for people. A people need money for live. For example, if a man have family, he must to buy food and pay for his house. If he lose his job, his family will be in a big problem. So, job security is very need for everyone. Also, if you have a permanent job, the bank can give you money for a car or house. This is very good for life.\n\nJob satisfaction is also good. People want to feel happy when they work. If you like your job, you will not feel stress. But if the job is not permanent, the happy is not for a long time. Maybe today you are happy but tomorrow you have no job. This is a very bad situation. You can not be happy if you have no money to buy things. So enjoying a job is not the first thing.\n\nIn conclusion, I think have a permanent job is more important than a happy job. Security for family and life is the main thing. A person need security first. Then he can find happy in his job. So job security is best.`;
+            const rewrittenEssayText = `The debate over whether job satisfaction should be prioritised over job security is a defining feature of the modern career landscape. While many advocate for the pursuit of work that provides fulfillment, others contend that the stability of a permanent role is paramount. This essay will argue that while enjoying one's job is important, the financial and psychological security offered by a permanent position holds greater significance.\n\nPrimarily, job security provides an essential foundation for a stable life. For most individuals, a consistent income is not a luxury but a necessity for covering fundamental living expenses such as housing, food, and utilities. Consider a primary breadwinner for a family; an unexpected job loss could plunge the household into immediate financial distress. Therefore, the assurance of a steady paycheck provides peace of mind and allows for long-term financial planning, such as securing a mortgage from a bank, which is often contingent on stable employment.\n\nOn the other hand, the importance of job satisfaction cannot be entirely dismissed. Spending a significant portion of one's life in a role that brings happiness and a sense of purpose can greatly enhance overall well-being and reduce work-related stress. However, this sense of fulfillment can be fleeting if it is not built upon a secure foundation. The anxiety of potential unemployment can overshadow any daily enjoyment derived from the work itself. Ultimately, one cannot truly feel content if basic needs are under constant threat.\n\nIn conclusion, while the allure of a fulfilling job is strong, I am of the opinion that job security is the more critical consideration. It forms the bedrock upon which individuals can build a secure life for themselves and their families. Once this fundamental stability is achieved, one is then in a much better position to seek out and cultivate satisfaction within their professional life.`;
+            const comparisonData = [{
+                id: 1,
+                original: "Some people think a happy job is more important. Other people think a permanent job is more important.",
+                rewritten: "The debate over whether job satisfaction should be prioritised over job security is a defining feature of the modern career landscape.",
+                reason: "Rephrases the simple statement into a sophisticated 'debate' framework, using advanced vocabulary ('prioritised', 'defining feature', 'career landscape').",
+                pillars: ["LR", "TR"]
+            }, {
+                id: 2,
+                original: "A people need money for live.",
+                rewritten: "For most individuals, a consistent income is not a luxury but a necessity for covering fundamental living expenses",
+                reason: "Corrects the grammatical error ('A people need') and replaces simple words ('money for live') with more precise phrasing ('consistent income', 'fundamental living expenses').",
+                pillars: ["GRA", "LR"]
+            }, {
+                id: 3,
+                original: "if a man have family, he must to buy food and pay for his house.",
+                rewritten: "Consider a primary breadwinner for a family; an unexpected job loss could plunge the household into immediate financial distress.",
+                reason: "Elevates a simple example into a more formal and impactful statement using stronger vocabulary ('breadwinner', 'plunge', 'financial distress').",
+                pillars: ["LR", "TR"]
+            }, {
+                id: 4,
+                original: "job security is very need for everyone.",
+                rewritten: "job security provides an essential foundation for a stable life.",
+                reason: "Corrects the word form error ('very need') and uses more academic language ('essential foundation').",
+                pillars: ["GRA", "LR"]
+            }, {
+                id: 5,
+                original: "the happy is not for a long time.",
+                rewritten: "this sense of fulfillment can be fleeting if it is not built upon a secure foundation.",
+                reason: "Replaces simplistic phrasing with more advanced and descriptive language ('sense of fulfillment', 'fleeting', 'secure foundation').",
+                pillars: ["LR", "CC"]
+            }, {
+                id: 6,
+                original: "I think have a permanent job is more important than a happy job.",
+                rewritten: "I am of the opinion that job security is the more critical consideration.",
+                reason: "Uses a more formal and academic phrase ('I am of the opinion that') and better vocabulary ('critical consideration') to state the thesis.",
+                pillars: ["LR", "GRA"]
+            }];
+
+            // --- SCRIPT LOGIC ---
+            function switchTab(tabName) {
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-content`).classList.add('active');
+            }
+
+            function createPillarTags(pillars) {
+                return pillars.map(p => `<span class="tooltip-pillar-tag pillar-${p.toLowerCase()}">${p}</span>`).join('');
+            }
+
+            function populateComparison() {
+                const originalContainer = document.getElementById('original-essay');
+                const rewrittenContainer = document.getElementById('rewritten-essay');
+                let processedOriginal = originalEssayText.replace(/\n/g, '<br><br>');
+                // FIX: Corrected variable name from rewrittenText to rewrittenEssayText
+                let processedRewritten = rewrittenEssayText.replace(/\n/g, '<br><br>');
+                comparisonData.forEach(item => {
+                    const originalHighlight = `<span class="highlight highlight-original" data-id="${item.id}">${item.original}</span>`;
+                    const rewrittenHighlight = `<span class="highlight highlight-rewritten" data-id="${item.id}">${item.rewritten}</span>`;
+                    processedOriginal = processedOriginal.replace(item.original, originalHighlight);
+                    processedRewritten = processedRewritten.replace(item.rewritten, rewrittenHighlight);
+                }
+                );
+                originalContainer.innerHTML = processedOriginal.split('<br><br>').map(p => `<p>${p}</p>`).join('');
+                rewrittenContainer.innerHTML = processedRewritten.split('<br><br>').map(p => `<p>${p}</p>`).join('');
+            }
+
+            function switchLanguage(lang) {
+                const langs = ['en', 'zh'];
+                const buttons = document.querySelectorAll('.lang-btn');
+                langs.forEach(l => {
+                    const elements = document.querySelectorAll(`.lang-${l}`);
+                    if (l === lang) {
+                        elements.forEach(el => el.classList.remove('hidden'));
+                    } else {
+                        elements.forEach(el => el.classList.add('hidden'));
+                    }
+                }
+                );
+                buttons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.classList.contains(lang)) {
+                        btn.classList.add('active');
+                    }
+                }
+                );
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                populateComparison();
+                const tooltip = document.getElementById('tooltip');
+                document.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = e.pageX + 15 + 'px';
+                    tooltip.style.top = e.pageY + 15 + 'px';
+                }
+                );
+                document.querySelectorAll('.highlight').forEach(highlight => {
+                    highlight.addEventListener('mouseover', (e) => {
+                        const id = e.target.dataset.id;
+                        const data = comparisonData.find(item => item.id == id);
+                        if (data) {
+                            document.querySelectorAll(`.highlight[data-id="${id}"]`).forEach(h => h.classList.add('active-hover'));
+                            tooltip.innerHTML = `<div class="tooltip-reason">${data.reason}</div>${createPillarTags(data.pillars)}`;
+                            tooltip.style.display = 'block';
+                        }
+                    }
+                    );
+                    highlight.addEventListener('mouseout', (e) => {
+                        document.querySelectorAll(`.highlight[data-id="${e.target.dataset.id}"]`).forEach(h => h.classList.remove('active-hover'));
+                        tooltip.style.display = 'none';
+                    }
+                    );
+                }
+                );
+
+                // Modal Controls
+                const workshopModal = document.getElementById('workshop-modal');
+                const closeWorkshopBtn = document.getElementById('close-workshop-button');
+                document.querySelectorAll('.open-workshop-button').forEach(button => {
+                    button.addEventListener('click', () => workshopModal.classList.add('active'));
+                }
+                );
+                closeWorkshopBtn.addEventListener('click', () => workshopModal.classList.remove('active'));
+                workshopModal.addEventListener('click', (e) => {
+                    if (e.target === workshopModal)
+                        workshopModal.classList.remove('active');
+                }
+                );
+
+                // Set initial language
+                switchLanguage('en');
+            }
+            );
+
+            function toggleAccordion(button) {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('svg');
+                const isOpening = !content.style.maxHeight;
+                document.querySelectorAll('.accordion-content').forEach(el => {
+                    el.style.maxHeight = null;
+                    el.previousElementSibling.querySelector('svg').style.transform = 'rotate(0deg)';
+                }
+                );
+                if (isOpening) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        </script>
+    </body>
+</html>
