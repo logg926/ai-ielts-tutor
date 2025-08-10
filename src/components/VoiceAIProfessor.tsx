@@ -72,63 +72,31 @@ When the student first connects, greet them warmly and offer to guide them throu
 
   // Navigation handler for AI tool calls
   const handleNavigateToSection = useCallback((section: string, reason?: string) => {
-    console.log('🧭 [DEBUG] Navigation requested:', { section, reason });
+    console.log('🧭 [VOICE] Navigation requested:', { section, reason });
+    console.log('🧭 [VOICE] Window object available:', typeof window !== 'undefined');
+    console.log('🧭 [VOICE] Global function exists:', !!(window as any)?.navigateToReportSection);
     
-    // Map section names to DOM element IDs or classes
-    const sectionMap: Record<string, string> = {
-      'overall_score': '.score-dial', // Overall score dial
-      'task_response': 'h3:contains("Task Response")', // Task Response section
-      'coherence_cohesion': 'h3:contains("Coherence & Cohesion")', // Coherence section
-      'lexical_resource': 'h3:contains("Lexical Resource")', // Lexical section
-      'grammar_accuracy': 'h3:contains("Grammar & Accuracy")', // Grammar section
-      'examiner_tip': '.bg-gradient-to-br', // Examiner tip card
-      'essay_comparison': '#comparison-content', // Essay comparison tab
-      'original_essay': '#original-essay', // Original essay container
-      'rewritten_essay': '#rewritten-essay' // Rewritten essay container
-    };
-    
-    const targetSelector = sectionMap[section];
-    if (targetSelector) {
-      // Use setTimeout to ensure the DOM is ready
+    // Call the global navigation function that works with Eta-rendered HTML
+    if (typeof window !== 'undefined' && (window as any).navigateToReportSection) {
+      console.log('🧭 [VOICE] Calling global navigation function immediately');
+      (window as any).navigateToReportSection(section, reason);
+    } else {
+      console.warn('⚠️ [VOICE] Global navigation function not available yet');
+      console.log('🧭 [VOICE] Available window properties:', Object.keys(window || {}));
+      
+      // Retry after a short delay in case the function isn't loaded yet
       setTimeout(() => {
-        try {
-          let element: Element | null = null;
-          
-          // Handle special selectors
-          if (targetSelector.includes(':contains')) {
-            // For text-based selectors, find by text content
-            const text = targetSelector.match(/contains\("([^"]+)"\)/)?.[1];
-            if (text) {
-              const elements = Array.from(document.querySelectorAll('h3'));
-              element = elements.find(el => el.textContent?.includes(text)) || null;
-            }
-          } else {
-            // Regular selector
-            element = document.querySelector(targetSelector);
-          }
-          
-          if (element) {
-            // Scroll to the element with smooth behavior
-            element.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'nearest'
-            });
-            
-            // Add a temporary highlight effect
-            element.classList.add('ring-4', 'ring-blue-400', 'ring-opacity-75');
-            setTimeout(() => {
-              element?.classList.remove('ring-4', 'ring-blue-400', 'ring-opacity-75');
-            }, 3000);
-            
-            console.log('✅ [DEBUG] Successfully navigated to section:', section);
-          } else {
-            console.warn('⚠️ [DEBUG] Could not find element for section:', section);
-          }
-        } catch (error) {
-          console.error('❌ [DEBUG] Navigation error:', error);
+        console.log('🧭 [VOICE] Retrying after 500ms delay...');
+        console.log('🧭 [VOICE] Global function exists now:', !!(window as any)?.navigateToReportSection);
+        
+        if ((window as any).navigateToReportSection) {
+          console.log('🧭 [VOICE] Calling global navigation function after delay');
+          (window as any).navigateToReportSection(section, reason);
+        } else {
+          console.error('❌ [VOICE] Global navigation function still not available after retry');
+          console.log('🧭 [VOICE] Window properties after retry:', Object.keys(window || {}));
         }
-      }, 100);
+      }, 500);
     }
   }, []);
 

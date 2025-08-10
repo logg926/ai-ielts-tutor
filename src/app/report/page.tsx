@@ -196,64 +196,99 @@ function ReportPageContent() {
           
           // Add global navigation function for Voice AI Professor
           (window as any).navigateToReportSection = function(section: string, reason?: string) {
-            console.log('🧭 [GLOBAL] Navigation requested:', { section, reason });
+            console.log('🧭 [GLOBAL] Navigation function called with:', { section, reason });
+            console.log('🧭 [GLOBAL] DOM ready state:', document.readyState);
+            console.log('🧭 [GLOBAL] Total elements in DOM:', document.querySelectorAll('*').length);
             
             let element: Element | null = null;
             let needsTabSwitch = false;
             
+            console.log('🧭 [GLOBAL] Starting section switch for:', section);
+            
             switch (section) {
               case 'overall_score':
+                console.log('🧭 [GLOBAL] Looking for overall score section...');
                 element = document.querySelector('#overall-score-section');
+                console.log('🧭 [GLOBAL] Overall score element found:', !!element);
                 break;
                 
               case 'task_response':
+                console.log('🧭 [GLOBAL] Looking for task response section...');
                 element = document.querySelector('#task-response-section');
+                console.log('🧭 [GLOBAL] Task response element found:', !!element);
                 break;
                 
               case 'coherence_cohesion':
+                console.log('🧭 [GLOBAL] Looking for coherence cohesion section...');
                 element = document.querySelector('#coherence-cohesion-section');
+                console.log('🧭 [GLOBAL] Coherence cohesion element found:', !!element);
                 break;
                 
               case 'lexical_resource':
+                console.log('🧭 [GLOBAL] Looking for lexical resource section...');
                 element = document.querySelector('#lexical-resource-section');
+                console.log('🧭 [GLOBAL] Lexical resource element found:', !!element);
                 break;
                 
               case 'grammar_accuracy':
+                console.log('🧭 [GLOBAL] Looking for grammar accuracy section...');
                 element = document.querySelector('#grammar-accuracy-section');
+                console.log('🧭 [GLOBAL] Grammar accuracy element found:', !!element);
                 break;
                 
               case 'examiner_tip':
+                console.log('🧭 [GLOBAL] Looking for examiner tip section...');
                 element = document.querySelector('#examiner-tip-section');
+                console.log('🧭 [GLOBAL] Examiner tip element found:', !!element);
                 break;
                 
               case 'essay_comparison':
+                console.log('🧭 [GLOBAL] Looking for essay comparison section...');
                 // First, switch to comparison tab
                 const comparisonTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
                   tab.textContent?.includes('Comparison') || tab.textContent?.includes('Essay')
                 ) as HTMLElement;
                 
+                console.log('🧭 [GLOBAL] Comparison tab found:', !!comparisonTab);
+                console.log('🧭 [GLOBAL] Available tabs:', Array.from(document.querySelectorAll('.tab')).map(t => t.textContent));
+                
                 if (comparisonTab) {
+                  console.log('🧭 [GLOBAL] Clicking comparison tab...');
                   comparisonTab.click();
                   needsTabSwitch = true;
                 }
                 
                 // Find comparison content
                 element = document.querySelector('#comparison-content');
+                console.log('🧭 [GLOBAL] Comparison content element found:', !!element);
                 break;
                 
               case 'original_essay':
+                console.log('🧭 [GLOBAL] Looking for original essay section...');
                 element = document.querySelector('#original-essay');
+                console.log('🧭 [GLOBAL] Original essay element found:', !!element);
                 break;
                 
               case 'rewritten_essay':
+                console.log('🧭 [GLOBAL] Looking for rewritten essay section...');
                 element = document.querySelector('#rewritten-essay');
+                console.log('🧭 [GLOBAL] Rewritten essay element found:', !!element);
                 break;
+                
+              default:
+                console.warn('🧭 [GLOBAL] Unknown section requested:', section);
             }
+            
+            console.log('🧭 [GLOBAL] Final element result:', !!element);
+            console.log('🧭 [GLOBAL] Need tab switch:', needsTabSwitch);
             
             if (element) {
               const scrollDelay = needsTabSwitch ? 500 : 100;
+              console.log('🧭 [GLOBAL] Scrolling with delay:', scrollDelay);
               
               setTimeout(() => {
+                console.log('🧭 [GLOBAL] Executing scroll to element...');
+                
                 // Scroll to element
                 element!.scrollIntoView({ 
                   behavior: 'smooth', 
@@ -261,11 +296,14 @@ function ReportPageContent() {
                   inline: 'nearest'
                 });
                 
+                console.log('🧭 [GLOBAL] Adding highlight classes...');
+                
                 // Add highlight effect
                 element!.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-100', 'bg-blue-50', 'bg-opacity-75');
                 
                 // Remove highlight after 4 seconds
                 setTimeout(() => {
+                  console.log('🧭 [GLOBAL] Removing highlight classes...');
                   element?.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-100', 'bg-blue-50', 'bg-opacity-75');
                 }, 4000);
                 
@@ -280,8 +318,14 @@ function ReportPageContent() {
                 lexicalResource: !!document.querySelector('#lexical-resource-section'),
                 grammarAccuracy: !!document.querySelector('#grammar-accuracy-section'),
                 examinerTip: !!document.querySelector('#examiner-tip-section'),
-                comparisonContent: !!document.querySelector('#comparison-content')
+                comparisonContent: !!document.querySelector('#comparison-content'),
+                originalEssay: !!document.querySelector('#original-essay'),
+                rewrittenEssay: !!document.querySelector('#rewritten-essay')
               });
+              
+              // Also log all elements with IDs for debugging
+              const allElementsWithIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
+              console.log('🧭 [GLOBAL] All elements with IDs:', allElementsWithIds);
             }
           };
           
