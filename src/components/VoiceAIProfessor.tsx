@@ -12,6 +12,8 @@ interface VoiceAIProfessorProps {
 export default function VoiceAIProfessor({ reportData }: VoiceAIProfessorProps) {
   const [hasStartedTour, setHasStartedTour] = useState(false);
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('idle');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   
   // Create the IELTS professor agent
@@ -69,7 +71,16 @@ When the student first connects, greet them warmly and offer to guide them throu
   const { transcriptItems } = useTranscript();
 
   const handleStartGuidedTour = async () => {
+    console.log('🎯 [DEBUG] handleStartGuidedTour called');
+    
     try {
+      console.log('🎯 [DEBUG] Setting loading state to true');
+      setIsLoading(true);
+      setError(null);
+      
+      console.log('🎯 [DEBUG] Current session status:', status);
+      console.log('🎯 [DEBUG] Calling connect function...');
+      
       await connect({
         getEphemeralKey: async () => {
           const response = await fetch('/api/session', {
@@ -87,7 +98,11 @@ When the student first connects, greet them warmly and offer to guide them throu
           }
 
           const data = await response.json();
-          return data.clientSecret;
+          
+          // Extract the actual string value from the clientSecret object
+          const ephemeralKey = data.clientSecret?.value || data.clientSecret;
+          
+          return ephemeralKey;
         },
         initialAgents: [ieltsAgent],
         audioElement: audioElementRef.current || undefined,
@@ -95,9 +110,27 @@ When the student first connects, greet them warmly and offer to guide them throu
           reportData: reportData
         }
       });
+      
+      console.log('🎯 [DEBUG] Connect function completed');
+      console.log('🎯 [DEBUG] New session status:', status);
+      
+      // Start the conversation
+      // The AI will automatically start speaking based on the agent instructions
+      console.log('🎯 [DEBUG] Voice guidance should be starting...');
       setHasStartedTour(true);
-    } catch (err) {
-      console.error('Failed to start guided tour:', err);
+      
+    } catch (error) {
+      console.error('❌ [DEBUG] Failed to start voice guidance:', error);
+      console.error('❌ [DEBUG] Error type:', typeof error);
+      console.error('❌ [DEBUG] Error instanceof Error:', error instanceof Error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start voice guidance';
+      console.error('❌ [DEBUG] Setting error message:', errorMessage);
+      
+      setError(errorMessage);
+    } finally {
+      console.log('🎯 [DEBUG] Setting loading state to false');
+      setIsLoading(false);
     }
   };
 
@@ -233,11 +266,24 @@ When the student first connects, greet them warmly and offer to guide them throu
         )}
 
       {/* Error Display */}
-      {status === 'error' && (
+      {(status === 'error' || error) && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
           <p className="text-sm text-red-800">
-            <strong>Error:</strong> Connection failed. Please try again.
+            <strong>Error:</strong> {error || 'Connection failed. Please try again.'}
           </p>
+          <p className="text-xs text-red-600 mt-1">
+            Check the browser console for detailed debug information.
+          </p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center space-x-3 text-blue-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Starting voice session...</span>
+          </div>
         </div>
       )}
 

@@ -1,21 +1,29 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { useEvent } from '../../contexts/EventContext';
-import { SessionStatus } from '../../types';
+import {
+  RealtimeSession,
+  RealtimeAgent as OpenAIRealtimeAgent,
+  OpenAIRealtimeWebRTC,
+} from '@openai/agents/realtime';
+import { useEvent } from '@/contexts/EventContext';
+import { SessionStatus } from '@/types';
+
+// Local RealtimeAgent interface to avoid conflicts
+export interface RealtimeAgent {
+  name: string;
+  instructions: string;
+  voice?: string;
+  model?: string;
+}
 
 export interface RealtimeSessionCallbacks {
   onConnectionChange?: (status: SessionStatus) => void;
   onAgentHandoff?: (agentName: string) => void;
 }
 
-export interface RealtimeAgent {
-  name: string;
-  instructions: string;
-  model?: string;
-}
-
 export interface ConnectOptions {
   getEphemeralKey: () => Promise<string>;
   initialAgents: RealtimeAgent[];
+  model?: string;
   audioElement?: HTMLAudioElement;
   extraContext?: Record<string, any>;
   outputGuardrails?: any[];
@@ -48,40 +56,130 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       updateStatus('connecting');
 
       try {
+        console.log('🔄 [DEBUG] Starting connection process...');
+        
         const ek = await getEphemeralKey();
+        console.log('🔄 [DEBUG] Ephemeral key received:', {
+          type: typeof ek,
+          isString: typeof ek === 'string',
+          length: typeof ek === 'string' ? ek.length : 'N/A',
+          value: typeof ek === 'string' ? ek.substring(0, 10) + '...' : ek
+        });
+        
         const rootAgent = initialAgents[0];
+        console.log('🔄 [DEBUG] Using agent:', rootAgent);
 
-        // Create a simple session object that mimics the RealtimeSession API
-        // This is a simplified version for now - you can enhance it with actual WebRTC later
-        sessionRef.current = {
-          agent: rootAgent,
-          audioElement,
+        // Create proper OpenAI RealtimeAgent using the constructor
+        console.log('🔄 [DEBUG] Creating OpenAI RealtimeAgent...');
+        const openAIAgent = new OpenAIRealtimeAgent({
+          name: rootAgent.name,
+          instructions: rootAgent.instructions,
+          voice: rootAgent.voice || 'alloy',
+          tools: [],
+          handoffs: [],
+        });
+        console.log('✅ [DEBUG] OpenAI RealtimeAgent created successfully');
+
+        // Create real OpenAI Realtime session with WebRTC audio transport
+        console.log('🔄 [DEBUG] Creating RealtimeSession with WebRTC...');
+        console.log('🔄 [DEBUG] Audio element:', audioElement ? 'Provided' : 'Missing');
+        
+        sessionRef.current = new RealtimeSession(openAIAgent, {
+          transport: new OpenAIRealtimeWebRTC({
+            audioElement,
+            useInsecureApiKey: true,
+          }),
+          model: 'gpt-4o-realtime-preview',
+          config: {
+            inputAudioFormat: 'pcm16',
+            outputAudioFormat: 'pcm16',
+            inputAudioTranscription: {
+              model: 'whisper-1',
+            },
+            turnDetection: {
+              type: 'server_vad',
+              threshold: 0.5,
+              silence_duration_ms: 200,
+            },
+          },
+          outputGuardrails: outputGuardrails ?? [],
           context: extraContext ?? {},
-          connected: true,
-          sendMessage: (text: string) => {
-            logClientEvent({ type: 'user_message', data: { text } }, 'user_message');
-            // Here you would normally send to the actual realtime API
-            console.log('Sending message:', text);
-          },
-          interrupt: () => {
-            logClientEvent({ type: 'interrupt', data: {} }, 'interrupt');
-            console.log('Interrupting...');
-          },
-          mute: (muted: boolean) => {
-            logClientEvent({ type: 'mute', data: { muted } }, 'mute');
-            console.log('Mute:', muted);
-          },
-          close: () => {
-            sessionRef.current = null;
-            updateStatus('idle');
-          }
-        };
+        });
+        console.log('✅ [DEBUG] RealtimeSession created successfully');
+
+        // Set up event listeners for the real session
+        console.log('🔄 [DEBUG] Setting up event listeners...');
+        
+        sessionRef.current.on('error', (...args: any[]) => {
+          console.error('❌ [DEBUG] Session error event:', args);
+          console.error('❌ [DEBUG] Error details:', args[0]);
+          
+          // Extract the actual error message from the nested error object
+          const errorEvent = args[0];
+          const actualError = errorEvent?.error;
+          console.error('❌ [DEBUG] Actual error object:', actualError);
+          console.error('❌ [DEBUG] Error type:', actualError?.type);
+          console.error('❌ [DEBUG] Error code:', actualError?.code);
+          console.error('❌ [DEBUG] Error message:', actualError?.message);
+          console.error('❌ [DEBUG] Error details:', actualError?.details);
+          
+          logClientEvent({ type: 'error', data: { message: actualError?.message || args[0] } }, 'error');
+          updateStatus('error');
+        });
+
+        sessionRef.current.on('connected', () => {
+          console.log('✅ [DEBUG] Session connected event - AUDIO SHOULD BE WORKING');
+          updateStatus('connected');
+        });
+
+        sessionRef.current.on('disconnected', () => {
+          console.log('🔌 [DEBUG] Session disconnected event');
+          updateStatus('idle');
+        });
+
+        // Add more event listeners for debugging
+        sessionRef.current.on('conversation.item.created', (event: any) => {
+          console.log('🗣️ [DEBUG] Conversation item created:', event);
+        });
+
+        sessionRef.current.on('response.audio.delta', (event: any) => {
+          console.log('🔊 [DEBUG] Audio delta received - AUDIO PLAYING');
+        });
+
+        sessionRef.current.on('response.done', (event: any) => {
+          console.log('✅ [DEBUG] Response completed:', event);
+        });
+
+        console.log('✅ [DEBUG] Event listeners set up successfully');
+
+        // Connect to the real OpenAI Realtime API
+        console.log('🔄 [DEBUG] Connecting to OpenAI Realtime API...');
+        
+        // Ensure ephemeral key is a string
+        const apiKey = typeof ek === 'string' ? ek : String(ek);
+        console.log('🔄 [DEBUG] API key prepared:', {
+          originalType: typeof ek,
+          finalType: typeof apiKey,
+          keyLength: apiKey.length
+        });
+        
+        await sessionRef.current.connect({ apiKey });
+        console.log('✅ [DEBUG] Connection call completed successfully');
 
         updateStatus('connected');
+        console.log('✅ [DEBUG] Status updated to connected');
+        
       } catch (error) {
-        console.error('Connection failed:', error);
+        console.error('❌ [DEBUG] Connection failed with error:', error);
+        console.error('❌ [DEBUG] Error name:', error instanceof Error ? error.name : 'Unknown');
+        console.error('❌ [DEBUG] Error message:', error instanceof Error ? error.message : 'Unknown error');
+        console.error('❌ [DEBUG] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        
         updateStatus('error');
-        throw error;
+        console.log('❌ [DEBUG] Status updated to error');
+        
+        logClientEvent({ type: 'connection_error', data: { error: error instanceof Error ? error.message : 'Unknown error' } }, 'connection_error');
+        console.log('❌ [DEBUG] Error event logged');
       }
     },
     [updateStatus, logClientEvent],
