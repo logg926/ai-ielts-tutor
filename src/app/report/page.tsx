@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Eta } from 'eta';
 import dynamic from 'next/dynamic';
+import VoiceAIProfessor from '@/components/VoiceAIProfessor';
 
 // Sample data for fallback
 const originalEssayText = `Some people think a happy job is more important. Other people think a permanent job is more important. In my opinion, it is more important to have a permanent job.\n\nHaving a permanent job is very important for people. A people need money for live. For example, if a man have family, he must to buy food and pay for his house. If he lose his job, his family will be in a big problem. So, job security is very need for everyone. Also, if you have a permanent job, the bank can give you money for a car or house. This is very good for life.\n\nJob satisfaction is also good. People want to feel happy when they work. If you like your job, you will not feel stress. But if the job is not permanent, the happy is not for a long time. Maybe today you are happy but tomorrow you have no job. This is a very bad situation. You can not be happy if you have no money to buy things. So enjoying a job is not the first thing.\n\nIn conclusion, I think have a permanent job is more important than a happy job. Security for family and life is the main thing. A person need security first. Then he can find happy in his job. So job security is best.`;
@@ -51,6 +52,7 @@ function ReportPageContent() {
   const [renderedHtml, setRenderedHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
 
   useEffect(() => {
     const renderReport = async () => {
@@ -106,6 +108,9 @@ function ReportPageContent() {
         };
 
         console.log("Template data prepared:", templateData);
+        
+        // Store report data for Voice AI Professor
+        setReportData(templateData);
 
         // Fetch the template file
         const response = await fetch("/report.eta");
@@ -236,11 +241,16 @@ function ReportPageContent() {
   }
 
   return (
-    <div 
-      className="report-container"
-      dangerouslySetInnerHTML={{ __html: renderedHtml }}
-      suppressHydrationWarning={true}
-    />
+    <div className="report-container">
+      {/* Voice AI Professor at the top */}
+      {reportData && <VoiceAIProfessor reportData={reportData} />}
+      
+      {/* Report content */}
+      <div 
+        dangerouslySetInnerHTML={{ __html: renderedHtml }}
+        suppressHydrationWarning={true}
+      />
+    </div>
   );
 }
 

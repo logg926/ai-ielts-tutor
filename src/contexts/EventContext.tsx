@@ -2,10 +2,16 @@
 
 import React, { createContext, useContext, useState, FC, PropsWithChildren } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { LoggedEvent } from "@/app/types";
+import { LoggedEvent } from "@/types";
+
+type ExtendedLoggedEvent = LoggedEvent & {
+  direction?: "client" | "server";
+  eventName?: string;
+  expanded?: boolean;
+};
 
 type EventContextValue = {
-  loggedEvents: LoggedEvent[];
+  loggedEvents: ExtendedLoggedEvent[];
   logClientEvent: (eventObj: Record<string, any>, eventNameSuffix?: string) => void;
   logServerEvent: (eventObj: Record<string, any>, eventNameSuffix?: string) => void;
   logHistoryItem: (item: any) => void;
@@ -15,7 +21,7 @@ type EventContextValue = {
 const EventContext = createContext<EventContextValue | undefined>(undefined);
 
 export const EventProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [loggedEvents, setLoggedEvents] = useState<LoggedEvent[]>([]);
+  const [loggedEvents, setLoggedEvents] = useState<ExtendedLoggedEvent[]>([]);
 
   function addLoggedEvent(direction: "client" | "server", eventName: string, eventData: Record<string, any>) {
     const id = eventData.event_id || uuidv4();
@@ -23,10 +29,11 @@ export const EventProvider: FC<PropsWithChildren> = ({ children }) => {
       ...prev,
       {
         id,
+        type: eventName,
+        data: eventData,
+        timestamp: new Date(),
         direction,
         eventName,
-        eventData,
-        timestamp: new Date().toLocaleTimeString(),
         expanded: false,
       },
     ]);
